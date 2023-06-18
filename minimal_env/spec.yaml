@@ -53,53 +53,17 @@ node_configs:
       - cmd: /bin/bash -c "nohup routinator -vv --no-rir-tals --disable-rsync --extra-tals-dir=/tal --rrdp-root-cert=cert.pem server --rtr 192.168.1.1:3323 1>routinator_output.log 2>&1" &
   - name: R1
     cmds:
-      - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
-      - cmd: sed -i -e 's/bgpd_options="   -A 127.0.0.1"/bgpd_options="   -A 127.0.0.1 -M rpki"/g' /etc/frr/daemons
-      - cmd: /usr/lib/frr/frrinit.sh start
       - cmd: ip addr add 10.1.0.1/24 dev net0
       - cmd: ip addr add 192.168.1.2/24 dev net1
-      - cmd: >-
-          vtysh -c "conf t"
-          -c "rpki"
-          -c "rpki cache 192.168.1.1 3323 preference 2"
-          -c "rpki polling_period 10"
-          -c "exit"
-          -c "router bgp 65001"
-          -c "no bgp ebgp-requires-policy"
-          -c ' bgp router-id 1.1.1.1'
-          -c "neighbor 10.1.0.2 remote-as 65002"
-          -c ' address-family ipv4 unicast'
-          -c '  redistribute connected'
-          -c "  neighbor 10.1.0.2 route-map rpki in"
-          -c ' exit-address-family'
-          -c 'route-map rpki permit 10'
-          -c ' match rpki invalid'
-          -c ' set local-preference 10'
-          -c ' exit'
-          -c 'route-map rpki permit 20'
-          -c ' match rpki notfound'
-          -c ' set local-preference 20'
-          -c ' exit'
-          -c 'route-map rpki permit 30'
-          -c ' match rpki valid'
-          -c ' set local-preference 50'
-          -c ' exit'
-          -c 'route-map rpki permit 40'
-          -c '!'   
-  - name: R2
-    cmds:
+      - cmd: bash -c "echo $(base64 -w 0 frr_conf/bgpd1.conf) | base64 -d > /etc/frr/bgpd.conf"
       - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
       - cmd: sed -i -e 's/bgpd_options="   -A 127.0.0.1"/bgpd_options="   -A 127.0.0.1 -M rpki"/g' /etc/frr/daemons
       - cmd: /usr/lib/frr/frrinit.sh start
+  - name: R2
+    cmds:
       - cmd: ip addr add 10.1.0.2/24 dev net0
       - cmd: ip addr add 192.168.2.2/24 dev net1
-      - cmd: >-
-          vtysh -c "conf t"
-          -c "router bgp 65002"
-          -c "no bgp ebgp-requires-policy"
-          -c ' bgp router-id 2.2.2.2'
-          -c "neighbor 10.1.0.1 remote-as 65001"
-          -c ' address-family ipv4 unicast'
-          -c '  redistribute connected'
-          -c ' exit-address-family'
-          -c '!'   
+      - cmd: bash -c "echo $(base64 -w 0 frr_conf/bgpd2.conf) | base64 -d > /etc/frr/bgpd.conf"
+      - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
+      - cmd: sed -i -e 's/bgpd_options="   -A 127.0.0.1"/bgpd_options="   -A 127.0.0.1 -M rpki"/g' /etc/frr/daemons
+      - cmd: /usr/lib/frr/frrinit.sh start
