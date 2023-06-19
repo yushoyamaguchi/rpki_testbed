@@ -23,6 +23,7 @@ node_configs:
       - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
       - cmd: /usr/lib/frr/frrinit.sh start
       - cmd: ip addr add 10.1.0.1/24 dev net0
+      # You can set config via vtysh
       - cmd: >-
           vtysh -c "conf t"
           -c "router bgp 65001"
@@ -36,6 +37,7 @@ node_configs:
   - name: R2
     cmds:
       - cmd: ip addr add 10.1.0.2/24 dev net0
+      # You can write config in bgpd.conf
       - cmd: bash -c "echo $(base64 -w 0 frr_conf/R2/bgpd.conf) | base64 -d > /etc/frr/bgpd.conf"
       - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
       - cmd: /usr/lib/frr/frrinit.sh start
