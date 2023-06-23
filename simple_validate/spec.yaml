@@ -1,0 +1,89 @@
+nodes:
+- name: ca
+  image: simple_krill:ver2.0
+  docker_run_extra_args: --entrypoint bash
+  interfaces:
+  - { name: net0, type: direct, args: rp#net0 }
+  sysctls:
+  - sysctl: net.ipv4.ip_forward=1
+- name: rp
+  image: simple_routinator:ver2.0
+  docker_run_extra_args: --entrypoint bash
+  interfaces:
+  - { name: net0, type: direct, args: ca#net0 }
+  - { name: net1, type: direct, args: R1#net1 }
+  - { name: net2, type: direct, args: R2#net1 }
+  sysctls:
+  - sysctl: net.ipv4.ip_forward=1
+- name: R1
+  image: frrouting/frr:latest
+  docker_run_extra_args: --entrypoint bash
+  interfaces:
+  - { name: net0, type: direct, args: R2#net0 }
+  - { name: net1, type: direct, args: rp#net1 }
+  - { name: net2, type: direct, args: R3#net0 }
+  sysctls:
+  - sysctl: net.ipv4.ip_forward=1
+- name: R2
+  image: frrouting/frr:latest
+  docker_run_extra_args: --entrypoint bash
+  interfaces:
+  - { name: net0, type: direct, args: R1#net0 }
+  - { name: net1, type: direct, args: rp#net2 }
+  sysctls:
+  - sysctl: net.ipv4.ip_forward=1  
+- name: R3
+  image: frrouting/frr:latest
+  docker_run_extra_args: --entrypoint bash
+  interfaces:
+  - { name: net0, type: direct, args: R1#net2 }
+  - { name: net1, type: direct, args: dummy#net0 }
+  sysctls:
+  - sysctl: net.ipv4.ip_forward=1    
+- name: dummy
+  image: frrouting/frr:latest
+  docker_run_extra_args: --entrypoint bash
+  interfaces:
+  - { name: net0, type: direct, args: R3#net2 }
+  sysctls:
+  - sysctl: net.ipv4.ip_forward=1   
+node_configs:
+  - name: ca
+    cmds:
+      - cmd: ip addr add 10.0.0.1/24 dev net0
+      - cmd: bash krill_regi1.sh
+  - name: rp
+    cmds:
+      - cmd: ip addr add 10.0.0.2/24 dev net0
+      - cmd: ip addr add 192.168.1.1/24 dev net1
+      - cmd: ip addr add 192.168.2.1/24 dev net2
+      - cmd: bash routinator_start1.sh
+      - cmd: /bin/bash -c "nohup routinator -vv --no-rir-tals --disable-rsync --extra-tals-dir=/tal --rrdp-root-cert=cert.pem server --rtr 192.168.1.1:3323 1>routinator_output.log 2>&1" &
+  - name: R1
+    cmds:
+      - cmd: ip addr add 10.1.0.1/24 dev net0
+      - cmd: ip addr add 192.168.1.2/24 dev net1
+      - cmd: ip addr add 10.2.0.1/24 dev net0
+      - cmd: bash -c "echo $(base64 -w 0 frr_conf/R1/bgpd.conf) | base64 -d > /etc/frr/bgpd.conf"
+      - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
+      - cmd: sed -i -e 's/bgpd_options="   -A 127.0.0.1"/bgpd_options="   -A 127.0.0.1 -M rpki"/g' /etc/frr/daemons
+      - cmd: /usr/lib/frr/frrinit.sh start
+  - name: R2
+    cmds:
+      - cmd: ip addr add 10.1.0.2/24 dev net0
+      - cmd: ip addr add 192.168.2.2/24 dev net1
+      - cmd: bash -c "echo $(base64 -w 0 frr_conf/R2/bgpd.conf) | base64 -d > /etc/frr/bgpd.conf"
+      - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
+      - cmd: sed -i -e 's/bgpd_options="   -A 127.0.0.1"/bgpd_options="   -A 127.0.0.1 -M rpki"/g' /etc/frr/daemons
+      - cmd: /usr/lib/frr/frrinit.sh start
+  - name: R3
+    cmds:
+      - cmd: ip addr add 10.2.0.2/24 dev net0
+      - cmd: ip addr add 192.168.2.1/24 dev net1
+      - cmd: bash -c "echo $(base64 -w 0 frr_conf/R3/bgpd.conf) | base64 -d > /etc/frr/bgpd.conf"
+      - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
+      - cmd: sed -i -e 's/bgpd_options="   -A 127.0.0.1"/bgpd_options="   -A 127.0.0.1 -M rpki"/g' /etc/frr/daemons
+      - cmd: /usr/lib/frr/frrinit.sh start 
+  - name: dummy
+    cmds:
+      - cmd: ip addr add 192.168.2.2/24 dev net0      
