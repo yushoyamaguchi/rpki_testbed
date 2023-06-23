@@ -63,7 +63,7 @@ node_configs:
     cmds:
       - cmd: ip addr add 10.1.0.1/24 dev net0
       - cmd: ip addr add 192.168.1.2/24 dev net1
-      - cmd: ip addr add 10.2.0.1/24 dev net0
+      - cmd: ip addr add 10.2.0.1/24 dev net2
       - cmd: bash -c "echo $(base64 -w 0 frr_conf/R1/bgpd.conf) | base64 -d > /etc/frr/bgpd.conf"
       - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
       - cmd: sed -i -e 's/bgpd_options="   -A 127.0.0.1"/bgpd_options="   -A 127.0.0.1 -M rpki"/g' /etc/frr/daemons
