@@ -63,16 +63,16 @@ node_configs:
       - cmd: /bin/bash -c "nohup routinator -vv --no-rir-tals --disable-rsync --extra-tals-dir=/tal --rrdp-root-cert=cert.pem server --rtr 192.168.1.1:3323 1>routinator_output.log 2>&1" &
   - name: R1
     cmds:
-      - cmd: ip addr add 10.1.0.1/24 dev net0
+      - cmd: ip addr add 10.2.0.1/24 dev net0
       - cmd: ip addr add 192.168.1.2/24 dev net1
-      - cmd: ip addr add 10.2.0.1/24 dev net2
+      - cmd: ip addr add 10.3.0.1/24 dev net2
       - cmd: bash -c "echo $(base64 -w 0 frr_conf/R1/bgpd.conf) | base64 -d > /etc/frr/bgpd.conf"
       - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
       - cmd: sed -i -e 's/bgpd_options="   -A 127.0.0.1"/bgpd_options="   -A 127.0.0.1 -M rpki"/g' /etc/frr/daemons
       - cmd: /usr/lib/frr/frrinit.sh start
   - name: R2
     cmds:
-      - cmd: ip addr add 10.1.0.2/24 dev net0
+      - cmd: ip addr add 10.2.0.2/24 dev net0
       - cmd: ip addr add 192.168.2.2/24 dev net1
       - cmd: bash -c "echo $(base64 -w 0 frr_conf/R2/bgpd.conf) | base64 -d > /etc/frr/bgpd.conf"
       - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
@@ -80,7 +80,7 @@ node_configs:
       - cmd: /usr/lib/frr/frrinit.sh start
   - name: R3
     cmds:
-      - cmd: ip addr add 10.2.0.2/24 dev net0
+      - cmd: ip addr add 10.3.0.2/24 dev net0
       - cmd: ip addr add 192.168.2.1/24 dev net1
       - cmd: bash -c "echo $(base64 -w 0 frr_conf/R3/bgpd.conf) | base64 -d > /etc/frr/bgpd.conf"
       - cmd: sed -i -e 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
