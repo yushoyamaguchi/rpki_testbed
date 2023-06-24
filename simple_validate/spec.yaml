@@ -54,6 +54,7 @@ node_configs:
       - cmd: bash krill_regi1.sh
       - cmd: bash roa65002.sh
       #- cmd: bash roa65003.sh
+      # If you want to treat AS65002 as malicious, change the shell script to enable
   - name: rp
     cmds:
       - cmd: ip addr add 10.0.0.2/24 dev net0
