@@ -12,3 +12,9 @@ In proper directory
 sudo bash docker_build.sh
 tinet reconf -c spec.yaml | sudo sh -x
 ```
+
+To enter a container
+```
+sudo docker exec -it <container name> /bin/bash
+sudo docker exec -it <container name> vtysh # CLI of BGP Router
+```
