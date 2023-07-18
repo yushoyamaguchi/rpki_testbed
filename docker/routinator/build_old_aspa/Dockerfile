@@ -7,9 +7,9 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 RUN bash /root/.cargo/env
 RUN git clone https://github.com/NLnetLabs/routinator.git
 WORKDIR /routinator
-#RUN git checkout 2b450d0 -b asap20230601
-RUN /root/.cargo/bin/cargo build --release --locked --features aspa
-#RUN /root/.cargo/bin/cargo build
+RUN git checkout 2b450d0 -b asap20230601
+#RUN /root/.cargo/bin/cargo build --release --locked --features aspa
+RUN /root/.cargo/bin/cargo build
 
 WORKDIR /
 ENV PATH="/routinator/target/debug:${PATH}"
