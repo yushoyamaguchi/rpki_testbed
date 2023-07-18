@@ -1,3 +1,3 @@
-IMG := simple_routinator:ver1.0
+IMG := routinator_build:ver1.0
 docker-build:
 	docker build --no-cache -t $(IMG)  .

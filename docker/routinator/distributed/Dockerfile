@@ -19,10 +19,5 @@ RUN wget -qO- https://packages.nlnetlabs.nl/aptkey.asc | apt-key add -
 RUN apt -y update
 RUN apt -y install routinator
 
-#RUN routinator --config /etc/routinator/routinator.conf init --rir-tals --accept-arin-rpa
-
-COPY ./routinator_start1.sh routinator_start1.sh
 
 
-
-#CMD ["/bin/bash"]

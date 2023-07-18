@@ -1,13 +1,13 @@
 nodes:
 - name: ca
-  image: simple_krill:ver2.0
+  image: krill_distro:ver1.0
   docker_run_extra_args: --entrypoint bash
   interfaces:
   - { name: net0, type: direct, args: rp#net0 }
   sysctls:
   - sysctl: net.ipv4.ip_forward=1
 - name: rp
-  image: simple_routinator:ver2.0
+  image: routinator_distro:ver1.0
   docker_run_extra_args: --entrypoint bash
   interfaces:
   - { name: net0, type: direct, args: ca#net0 }
@@ -51,8 +51,11 @@ node_configs:
   - name: ca
     cmds:
       - cmd: ip addr add 10.0.0.1/24 dev net0
-      - cmd: bash krill_regi1.sh
+      - cmd: bash -c "echo $(base64 -w 0 krill/krill_regi1.sh) | base64 -d > krill_regi.sh"
+      - cmd: bash krill_regi.sh
+      - cmd: bash -c "echo $(base64 -w 0 krill/roa_sh/roa65002.sh) | base64 -d > roa65002.sh"
       - cmd: bash roa65002.sh
+      #- cmd: bash -c "echo $(base64 -w 0 krill/roa_sh/roa65003.sh) | base64 -d > roa65003.sh"
       #- cmd: bash roa65003.sh
       # If you want to treat AS65002 as malicious, change the shell script to enable
   - name: rp
@@ -60,7 +63,8 @@ node_configs:
       - cmd: ip addr add 10.0.0.2/24 dev net0
       - cmd: ip addr add 192.168.1.1/24 dev net1
       - cmd: ip addr add 192.168.2.1/24 dev net2
-      - cmd: bash routinator_start1.sh
+      - cmd: bash -c "echo $(base64 -w 0 routinator/routinator_start1.sh) | base64 -d > routinator_start.sh"
+      - cmd: bash routinator_start.sh
       - cmd: /bin/bash -c "nohup routinator -vv --no-rir-tals --disable-rsync --extra-tals-dir=/tal --rrdp-root-cert=cert.pem server --rtr 192.168.1.1:3323 1>routinator_output.log 2>&1" &
   - name: R1
     cmds:

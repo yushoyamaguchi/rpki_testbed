@@ -7,11 +7,23 @@ chmod +x /usr/bin/tinet
 ```
 
 # Usage
-In proper directory
+Firstly, build Docker Images of Krill and Routinator.
+In proper directoris in docker/krill or docker/routinator directory
 ```
-sudo bash docker_build.sh
+sudo make docker-build
+```
+
+Otherwise, in docker directory,
+```
+sudo bash all_build.sh
+```
+<br>
+
+After that, in proper directory,
+```
 tinet reconf -c spec.yaml | sudo sh -x
 ```
+<br>
 
 To enter a container
 ```
