@@ -1,0 +1,100 @@
+nodes:
+- name: ca
+  image: yama_krill_distro:ver1.0
+  docker_run_extra_args: --entrypoint bash
+  interfaces:
+  - { name: net0, type: direct, args: rp#net0 }
+  sysctls:
+  - sysctl: net.ipv6.conf.all.disable_ipv6=0
+  - sysctl: net.ipv6.conf.default.disable_ipv6=0
+  - sysctl: net.ipv4.ip_forward=1
+- name: rp
+  image: routinator_build_old_aspa:ver1.0
+  docker_run_extra_args: --entrypoint bash
+  interfaces:
+  - { name: net0, type: direct, args: ca#net0 }
+  - { name: net1, type: direct, args: R1#net1 }
+  sysctls:
+  - sysctl: net.ipv6.conf.all.disable_ipv6=0
+  - sysctl: net.ipv6.conf.default.disable_ipv6=0
+  - sysctl: net.ipv4.ip_forward=1
+- name: R1
+  image: openbgpd/openbgpd:latest
+  interfaces:
+  - { name: net0, type: direct, args: R2#net0 }
+  - { name: net1, type: direct, args: rp#net1 }
+  sysctls:
+  - sysctl: net.ipv6.conf.all.disable_ipv6=0
+  - sysctl: net.ipv6.conf.default.disable_ipv6=0
+  - sysctl: net.ipv4.ip_forward=1
+- name: R2
+  image: openbgpd/openbgpd:latest
+  interfaces:
+  - { name: net0, type: direct, args: R1#net0 }
+  - { name: net1, type: direct, args: R3#net0 }
+  sysctls:
+  - sysctl: net.ipv6.conf.all.disable_ipv6=0
+  - sysctl: net.ipv6.conf.default.disable_ipv6=0
+  - sysctl: net.ipv4.ip_forward=1  
+- name: R3
+  image: openbgpd/openbgpd:latest
+  interfaces:
+  - { name: net0, type: direct, args: R2#net1 }
+  - { name: net1, type: direct, args: FakeR4#net0 }
+  sysctls:
+  - sysctl: net.ipv6.conf.all.disable_ipv6=0
+  - sysctl: net.ipv6.conf.default.disable_ipv6=0
+  - sysctl: net.ipv4.ip_forward=1    
+- name: FakeR4
+  image: openbgpd/openbgpd:latest
+  interfaces:
+  - { name: net0, type: direct, args: R3#net1 }
+  - { name: net1, type: direct, args: FakeR5#net0 }
+  sysctls:
+  - sysctl: net.ipv6.conf.all.disable_ipv6=0
+  - sysctl: net.ipv6.conf.default.disable_ipv6=0
+  - sysctl: net.ipv4.ip_forward=1 
+- name: FakeR5
+  image: openbgpd/openbgpd:latest
+  interfaces:
+  - { name: net0, type: direct, args: FakeR4#net1 }    
+node_configs:
+  - name: ca
+    cmds:
+      - cmd: ip addr add 10.0.0.1/24 dev net0
+      - cmd: sh -c "echo $(base64 -w 0 krill/krill_regi1.sh) | base64 -d > krill_regi.sh"
+      - cmd: bash krill_regi.sh
+  - name: rp
+    cmds:
+      - cmd: ip addr add 10.0.0.2/24 dev net0
+      - cmd: ip addr add 192.168.1.1/24 dev net1
+      - cmd: sh -c "echo $(base64 -w 0 routinator/routinator_start1.sh) | base64 -d > routinator_start.sh"
+      - cmd: bash routinator_start.sh
+      - cmd: /bin/bash -c "nohup routinator -vv --no-rir-tals --disable-rsync --extra-tals-dir=/tal --enable-aspa --rrdp-root-cert=cert.pem server --rtr 192.168.1.1:3323 1>routinator_output.log 2>&1" &
+  - name: R1
+    cmds:
+      - cmd: ip addr add 10.1.0.1/24 dev net0
+      - cmd: ip addr add 192.168.1.2/24 dev net1
+      - cmd: sh -c "echo $(base64 -w 0 openbgpd/bgpd_conf/bgpd1.conf) | base64 -d > /etc/bgpd/bgpd.conf"
+      - cmd: bgpctl reload
+  - name: R2
+    cmds:
+      - cmd: ip addr add 10.1.0.2/24 dev net0
+      - cmd: ip addr add 10.2.0.1/24 dev net1
+      - cmd: sh -c "echo $(base64 -w 0 openbgpd/bgpd_conf/bgpd2.conf) | base64 -d > /etc/bgpd/bgpd.conf"
+      - cmd: bgpctl reload
+  - name: R3
+    cmds:
+      - cmd: ip addr add 10.2.0.2/24 dev net0
+      - cmd: ip addr add 10.3.0.1/24 dev net1
+      - cmd: sh -c "echo $(base64 -w 0 openbgpd/bgpd_conf/bgpd3.conf) | base64 -d > /etc/bgpd/bgpd.conf"
+      - cmd: bgpctl reload
+  - name: FakeR4
+    cmds:
+      - cmd: ip addr add 10.3.0.2/24 dev net0
+      - cmd: ip addr add 7.7.7.1/24 dev net1
+      - cmd: sh -c "echo $(base64 -w 0 openbgpd/bgpd_conf/bgpd_fake4.conf) | base64 -d > /etc/bgpd/bgpd.conf"
+      - cmd: bgpctl reload   
+  - name: FakeR5
+    cmds:
+      - cmd: ip addr add 7.7.7.2/24 dev net0    
